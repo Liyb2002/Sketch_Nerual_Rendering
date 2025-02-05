@@ -43,7 +43,7 @@ class cad2sketch_dataset_loader:
         Processes an individual subfolder by reading JSON files and extracting relevant data.
         """
         final_edges_file_path = os.path.join(subfolder_path, 'final_edges.json')
-        all_edges_file_path = os.path.join(subfolder_path, 'all_edges.json')
+        all_edges_file_path = os.path.join(subfolder_path, 'unique_edges.json')
         strokes_dict_path = os.path.join(subfolder_path, 'strokes_dict.json')
 
         # Check if required JSON files exist
@@ -60,18 +60,27 @@ class cad2sketch_dataset_loader:
         self.idx += 1  # Increment index for the next subfolder
 
         # Load stroke connection matrix
+        # intersection_matrix has shape (num_all_edges, num_all_edges)
         strokes_dict_data = self.read_json(strokes_dict_path)
+        intersection_matrix = cad2sketch_stroke_features.build_intersection_matrix(strokes_dict_data)
+        print("intersection_matrix", intersection_matrix.shape)
 
         # Load and visualize all edges
+        # all_edges_matrix has shape (num_all_edges, 6)
         all_edges_data = self.read_json(all_edges_file_path)
         all_edges_matrix = cad2sketch_stroke_features.simple_build_all_edges_features(all_edges_data)
-        # cad2sketch_stroke_features.via_all_edges(all_edges_data)
+        cad2sketch_stroke_features.via_all_edges(all_edges_data)
+        print("all_edges_matrix", all_edges_matrix.shape)
 
 
         # Load and visualize final edges
+        # final_edges_matrix has shape (num_all_edges, 1)
         final_edges_data = self.read_json(final_edges_file_path)
         final_edges_matrix = cad2sketch_stroke_features.simple_build_final_edges_features(final_edges_data, all_edges_data)
         cad2sketch_stroke_features.vis_final_edges(final_edges_data)
+
+
+        # build stroke intersection 
 
     def read_json(self, file_path):
         """
@@ -82,5 +91,5 @@ class cad2sketch_dataset_loader:
                 return json.load(f)
         except Exception as e:
             print(f"Error reading JSON file {file_path}: {e}")
-            return None
+            return None#
 
