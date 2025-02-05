@@ -42,12 +42,12 @@ class cad2sketch_dataset_loader:
         """
         Processes an individual subfolder by reading JSON files and extracting relevant data.
         """
-        json_file_path = os.path.join(subfolder_path, 'final_edges.json')
+        final_edges_file_path = os.path.join(subfolder_path, 'final_edges.json')
         all_edges_file_path = os.path.join(subfolder_path, 'all_edges.json')
         strokes_dict_path = os.path.join(subfolder_path, 'strokes_dict.json')
 
         # Check if required JSON files exist
-        if not os.path.exists(json_file_path):
+        if not os.path.exists(final_edges_file_path):
             print(f"Skipping {subfolder_path}: 'final_edges.json' not found.")
             return
         if not os.path.exists(all_edges_file_path):
@@ -62,13 +62,16 @@ class cad2sketch_dataset_loader:
         # Load stroke connection matrix
         strokes_dict_data = self.read_json(strokes_dict_path)
 
-        # Load and visualize final edges
-        json_data = self.read_json(json_file_path)
-        cad2sketch_stroke_features.vis_final_edges(json_data)
-
         # Load and visualize all edges
         all_edges_data = self.read_json(all_edges_file_path)
-        cad2sketch_stroke_features.via_all_edges(all_edges_data)
+        all_edges_matrix = cad2sketch_stroke_features.simple_build_all_edges_features(all_edges_data)
+        # cad2sketch_stroke_features.via_all_edges(all_edges_data)
+
+
+        # Load and visualize final edges
+        final_edges_data = self.read_json(final_edges_file_path)
+        final_edges_matrix = cad2sketch_stroke_features.simple_build_final_edges_features(final_edges_data, all_edges_data)
+        cad2sketch_stroke_features.vis_final_edges(final_edges_data)
 
     def read_json(self, file_path):
         """

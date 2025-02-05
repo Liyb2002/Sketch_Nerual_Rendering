@@ -429,3 +429,100 @@ def via_all_edges(all_edges_json):
 
     # Show plot
     plt.show()
+
+
+
+# ------------------------------------------------------------------------------------# 
+
+
+
+
+def close(p1, p2, tol=1e-4):
+    """
+    Checks if two 3D points are close within a tolerance.
+
+    Parameters:
+    - p1, p2: Tuples or lists of (x, y, z) coordinates.
+    - tol: Tolerance for closeness check.
+
+    Returns:
+    - Boolean indicating if points are close.
+    """
+    return all(abs(a - b) < tol for a, b in zip(p1, p2))
+
+def simple_build_final_edges_features(final_edges_json, all_edges_json):
+    """
+    Builds a binary matrix indicating if each all_edges_json edge is found in final_edges_json.
+
+    Parameters:
+    - final_edges_json (dict): A dictionary where keys are edge IDs, and values contain edge geometries.
+    - all_edges_json (list): A list of dictionaries where each represents an edge with its geometry.
+
+    Returns:
+    - numpy.ndarray: A matrix of shape (num_all_edges, 1) with 1 indicating a match and 0 otherwise.
+    """
+    num_all_edges = len(all_edges_json)
+    match_matrix = np.zeros((num_all_edges, 1), dtype=np.int32)  # Initialize with 0
+
+    for idx, all_edges_stroke in enumerate(all_edges_json):
+        all_edges_geometry = all_edges_stroke.get("geometry", [])
+        
+        if len(all_edges_geometry) < 2:
+            print(f"Skipping all_edges index {idx}: Insufficient geometry points.")
+            continue  # Skip invalid edges
+
+        all_edges_start = tuple(all_edges_geometry[0])  # First point
+        all_edges_end = tuple(all_edges_geometry[-1])  # Last point
+
+        # Check if this all_edges stroke matches any final_edges stroke
+        for key, stroke in final_edges_json.items():
+            final_edges_geometry = stroke.get("geometry", [])
+            
+            if len(final_edges_geometry) < 2:
+                continue  # Skip invalid edges
+
+            final_edges_start = tuple(final_edges_geometry[0])  # First point
+            final_edges_end = tuple(final_edges_geometry[-1])  # Last point
+
+            if (close(all_edges_start, final_edges_start) and close(all_edges_end, final_edges_end)) or \
+               (close(all_edges_start, final_edges_end) and close(all_edges_end, final_edges_start)):
+                match_matrix[idx] = 1  # Mark as used
+                break  # No need to check further once matched
+
+    # print(f"Number of matches: {np.sum(match_matrix)}")
+    return match_matrix
+
+
+def simple_build_all_edges_features(all_edges_json):
+    """
+    Builds a matrix with shape (num_all_edges, 6) where each row contains 
+    the start and end points (x, y, z) of an edge.
+
+    Parameters:
+    - all_edges_json (list): A list of dictionaries where each dictionary represents a stroke 
+      with its geometry.
+
+    Returns:
+    - numpy.ndarray: A matrix of shape (num_all_edges, 6) with start and end points.
+    """
+    edge_features = []
+
+    for stroke in all_edges_json:
+        geometry = stroke['geometry']
+
+        
+        if len(geometry) < 2:
+            print(f"Skipping stroke: Insufficient geometry points.")
+            continue  # Skip if there aren't at least two points
+        
+        start = geometry[0]  # First point
+        end = geometry[-1]  # Last point
+
+        # Ensure we extract x, y, z coordinates only
+        if len(start) >= 3 and len(end) >= 3:
+            node_feature = [start[0], start[1], start[2], end[0], end[1], end[2]]
+            edge_features.append(node_feature)
+        else:
+            print(f"Skipping stroke: Invalid start or end point format.")
+
+    return np.array(edge_features, dtype=np.float32) if edge_features else np.empty((0, 6), dtype=np.float32)
