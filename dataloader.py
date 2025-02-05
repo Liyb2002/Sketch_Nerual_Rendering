@@ -59,7 +59,7 @@ class cad2sketch_dataset_loader(Dataset):
             missing_files.append("strokes_dict.json")
 
         if missing_files:
-            print(f"Skipping {subfolder_path}: Missing files: {', '.join(missing_files)}")
+            # print(f"Skipping {subfolder_path}: Missing files: {', '.join(missing_files)}")
             return None, None, None
 
         # Load stroke connection matrix
@@ -96,7 +96,7 @@ class cad2sketch_dataset_loader(Dataset):
                 return result  # Return valid data
 
             # If missing files, move to the next available subfolder
-            print(f"Skipping index {index} due to missing files. Trying next index.")
+            # print(f"Skipping index {index} due to missing files. Trying next index.")
             index += 1  
 
         raise IndexError("No valid subfolders left in the dataset.")
