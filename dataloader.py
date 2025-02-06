@@ -79,7 +79,7 @@ class cad2sketch_dataset_loader(Dataset):
         all_edges_matrix = torch.tensor(all_edges_matrix, dtype=torch.float32)
         final_edges_matrix = torch.tensor(final_edges_matrix, dtype=torch.float32)
 
-        return intersection_matrix, all_edges_matrix, final_edges_matrix
+        return intersection_matrix, all_edges_matrix, final_edges_matrix, final_edges_file_path
 
 
     def __getitem__(self, index):

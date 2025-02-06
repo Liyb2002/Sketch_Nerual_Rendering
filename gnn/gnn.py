@@ -30,3 +30,20 @@ class SemanticModule(nn.Module):
         return x_dict
 
 
+
+class Stroke_Decoder(nn.Module):
+    def __init__(self, hidden_channels=128):
+        super(Stroke_Decoder, self).__init__()
+
+        self.decoder = nn.Sequential(
+            nn.Linear(64, hidden_channels),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.1),
+            nn.Linear(hidden_channels, 16),
+            nn.ReLU(inplace=True),
+            nn.Linear(16, 1),
+
+        )
+
+    def forward(self, x_dict):
+        return torch.sigmoid(self.decoder(x_dict['stroke']))
