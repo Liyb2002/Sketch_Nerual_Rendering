@@ -11,6 +11,7 @@ import gnn_graph
 import gnn.gnn
 import os
 
+import numpy as np
 
 import cad2sketch_stroke_features
 
@@ -58,9 +59,9 @@ def train():
 
     # Load data
     for data in tqdm(dataloader, desc="Building Graphs"):
-        intersection_matrix, all_edges_matrix, final_edges_matrix = data
+        intersection_matrix, all_edges_matrix, final_edges_matrix, all_edges_file_path= data
         
-        all_edges_matrix = all_edges_matrix.squeeze(0).to(device)  # Shape: (num_strokes, 6)
+        all_edges_matrix = all_edges_matrix.squeeze(0)[:, :6].to(device)  # Shape: (num_strokes, 7)
         intersection_matrix = intersection_matrix.squeeze(0).to(device)  # Shape: (num_strokes, num_strokes)
         final_edges_matrix = final_edges_matrix.squeeze(0).to(device)  # Shape: (num_strokes, 1)
 
@@ -85,7 +86,7 @@ def train():
         total_loss = 0.0
 
         # Training loop
-        for graph, mask in zip(train_graphs, train_masks):
+        for graph, mask in tqdm(zip(train_graphs, train_masks)):
             optimizer.zero_grad()
 
             # Forward pass
@@ -108,7 +109,7 @@ def train():
         correct, total = 0, 0
 
         with torch.no_grad():
-            for graph, mask in zip(val_graphs, val_masks):
+            for graph, mask in tqdm(zip(val_graphs, val_masks)):
                 x_dict = graph_encoder(graph.x_dict, graph.edge_index_dict)
                 output = graph_decoder(x_dict)  # Shape: (num_strokes, 1)
 
@@ -139,7 +140,6 @@ def train():
 # ------------------------------------------------------------------------------# 
 
 
-
 def eval():
     """Evaluate the trained model and visualize prediction results."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -152,9 +152,9 @@ def eval():
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     for data in dataloader:
-        intersection_matrix, all_edges_matrix, final_edges_matrix, final_edges_file_path = data
+        intersection_matrix, all_edges_matrix, final_edges_matrix, all_edges_file_path = data
         
-        all_edges_matrix = all_edges_matrix.squeeze(0).to(device)  # Shape: (num_strokes, 6)
+        all_edges_matrix = all_edges_matrix.squeeze(0)[:, :6].to(device)  # Shape: (num_strokes, 7)
         intersection_matrix = intersection_matrix.squeeze(0).to(device)  # Shape: (num_strokes, num_strokes)
         final_edges_matrix = final_edges_matrix.squeeze(0).to(device)  # Shape: (num_strokes, 1)
 
@@ -174,16 +174,15 @@ def eval():
         final_edges_matrix = final_edges_matrix.cpu().numpy()
 
         # Visualize results
-        print("final_edges_file_path", final_edges_file_path)
-        final_edges_data = helper.read_json(final_edges_file_path[0])
-        cad2sketch_stroke_features.vis_final_edges(final_edges_data)
+        all_edges_data = helper.read_json(all_edges_file_path[0])
+        # cad2sketch_stroke_features.vis_all_edges_selected(all_edges_data,pred_mask)
+        # cad2sketch_stroke_features.vis_all_edges_selected(all_edges_data,final_edges_matrix)
 
-        # print("Visualizing predicted final edges:")
-        # cad2sketch_stroke_features.vis_final_edges(final_edges_data)
-
-        break  # Only visualize one sample; remove this to evaluate the full dataset.
+        cad2sketch_stroke_features.vis_all_edges_only_selected(all_edges_data,pred_mask)
+        cad2sketch_stroke_features.vis_all_edges_only_selected(all_edges_data,final_edges_matrix)
 
 
 
 # ------------------------------------------------------------------------------# 
 eval()
+

@@ -37,7 +37,7 @@ class cad2sketch_dataset_loader(Dataset):
                 continue
 
             for subfolder in subfolders:
-                subfolder_path = os.path.join(folder_path, subfolder)
+                subfolder_path = os.path.join(folder_path, subfolders[0])
                 self.subfolder_paths.append(subfolder_path)  # Store paths instead of processing
 
     def process_subfolder(self, subfolder_path):
@@ -69,17 +69,19 @@ class cad2sketch_dataset_loader(Dataset):
         # Load and visualize all edges
         all_edges_data = self.read_json(all_edges_file_path)
         all_edges_matrix = cad2sketch_stroke_features.simple_build_all_edges_features(all_edges_data)
+        # cad2sketch_stroke_features.vis_all_edges(all_edges_data)
 
         # Load and visualize final edges
         final_edges_data = self.read_json(final_edges_file_path)
         final_edges_matrix = cad2sketch_stroke_features.simple_build_final_edges_features(final_edges_data, all_edges_data)
+        # cad2sketch_stroke_features.vis_final_edges(final_edges_data)
 
         # Convert to torch tensors if needed
         intersection_matrix = torch.tensor(intersection_matrix, dtype=torch.float32)
         all_edges_matrix = torch.tensor(all_edges_matrix, dtype=torch.float32)
         final_edges_matrix = torch.tensor(final_edges_matrix, dtype=torch.float32)
 
-        return intersection_matrix, all_edges_matrix, final_edges_matrix, final_edges_file_path
+        return intersection_matrix, all_edges_matrix, final_edges_matrix, all_edges_file_path
 
 
     def __getitem__(self, index):

@@ -401,7 +401,7 @@ def vis_final_edges(final_edges_json):
 
 
 
-def via_all_edges(all_edges_json):
+def vis_all_edges(all_edges_json):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.grid(False)
@@ -431,6 +431,82 @@ def via_all_edges(all_edges_json):
     plt.show()
 
 
+
+def vis_all_edges_selected(all_edges_json, mask):
+    """
+    Visualizes all edges, with selected edges in black and unselected edges in red.
+
+    Parameters:
+    - all_edges_json: List of dictionaries containing stroke geometry.
+    - mask: NumPy array of shape (num_edges, 1), where values > 0.5 indicate selected edges.
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.grid(False)
+
+    # Loop through all strokes and visualize them with different colors based on the mask
+    for i, stroke in enumerate(all_edges_json):
+        geometry = stroke['geometry']
+        
+        if len(geometry) < 2:
+            continue  # Ensure at least two points exist
+
+        # Extract x, y, z coordinates
+        x_values = [point[0] for point in geometry]
+        y_values = [point[1] for point in geometry]
+        z_values = [point[2] for point in geometry]
+
+        # Determine color: black if selected, red if not selected
+        color = 'black' if mask[i, 0] > 0.5 else 'red'
+
+        # Plot the stroke
+        ax.plot(x_values, y_values, z_values, color=color, linewidth=0.5)
+
+    # Set axis labels
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    # Show plot
+    plt.show()
+
+
+
+def vis_all_edges_only_selected(all_edges_json, mask):
+    """
+    Visualizes only the selected strokes where mask > 0.5 in black with linewidth=0.5.
+
+    Parameters:
+    - all_edges_json: List of dictionaries containing stroke geometry.
+    - mask: NumPy array of shape (num_edges, 1), where values > 0.5 indicate selected edges.
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.grid(False)
+
+    # Loop through all strokes and visualize only the selected ones
+    for i, stroke in enumerate(all_edges_json):
+        if mask[i, 0] > 0.5:  # Only visualize selected strokes
+            geometry = stroke['geometry']
+            
+            if len(geometry) < 2:
+                continue  # Ensure at least two points exist
+
+            # Extract x, y, z coordinates
+            x_values = [point[0] for point in geometry]
+            y_values = [point[1] for point in geometry]
+            z_values = [point[2] for point in geometry]
+
+            # Plot only selected strokes
+            ax.plot(x_values, y_values, z_values, color='black', linewidth=0.5)
+
+    # Set axis labels
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    # Show plot
+    plt.show()
 
 # ------------------------------------------------------------------------------------# 
 
@@ -494,24 +570,29 @@ def simple_build_final_edges_features(final_edges_json, all_edges_json):
     return match_matrix
 
 
+
 def simple_build_all_edges_features(all_edges_json):
     """
-    Builds a matrix with shape (num_all_edges, 6) where each row contains 
-    the start and end points (x, y, z) of an edge.
+    Builds a matrix with shape (num_all_edges, 7) where each row contains:
+    - Start and end points (x, y, z) of an edge (6 values).
+    - A binary flag (1 if stroke type is 'feature_line', else 0).
 
     Parameters:
     - all_edges_json (list): A list of dictionaries where each dictionary represents a stroke 
-      with its geometry.
+      with its geometry and type.
 
     Returns:
-    - numpy.ndarray: A matrix of shape (num_all_edges, 6) with start and end points.
+    - numpy.ndarray: A matrix of shape (num_all_edges, 7) with start, end points, and stroke type flag.
     """
     edge_features = []
 
     for stroke in all_edges_json:
         geometry = stroke['geometry']
+        stroke_type = stroke.get('type', '')  # Get stroke type, default to empty if not found
 
-        
+        # Assign 1 if 'feature_line', otherwise 0
+        type_flag = 1 if stroke_type == 'feature_line' else 0
+
         if len(geometry) < 2:
             print(f"Skipping stroke: Insufficient geometry points.")
             continue  # Skip if there aren't at least two points
@@ -521,12 +602,12 @@ def simple_build_all_edges_features(all_edges_json):
 
         # Ensure we extract x, y, z coordinates only
         if len(start) >= 3 and len(end) >= 3:
-            node_feature = [start[0], start[1], start[2], end[0], end[1], end[2]]
+            node_feature = [start[0], start[1], start[2], end[0], end[1], end[2], type_flag]
             edge_features.append(node_feature)
         else:
             print(f"Skipping stroke: Invalid start or end point format.")
 
-    return np.array(edge_features, dtype=np.float32) if edge_features else np.empty((0, 6), dtype=np.float32)
+    return np.array(edge_features, dtype=np.float32) if edge_features else np.empty((0, 7), dtype=np.float32)
 
 
 
