@@ -70,17 +70,14 @@ def train():
         graphs.append(cur_gnn_graph)
         final_edges_mask.append(final_edges_matrix)
 
-        if len(graphs) > 20:
-            break
-
 
     # Split dataset
     split_index = int(0.8 * len(graphs))
-    train_graphs, val_graphs = graphs[:], graphs[:]
-    train_masks, val_masks = final_edges_mask[:], final_edges_mask[:]
+    train_graphs, val_graphs = graphs[:split_index], graphs[split_index:]
+    train_masks, val_masks = final_edges_mask[:split_index], final_edges_mask[split_index:]
 
     # Training loop
-    epochs = 500
+    epochs = 100
     best_accuracy = 0.0
 
     for epoch in range(epochs):
