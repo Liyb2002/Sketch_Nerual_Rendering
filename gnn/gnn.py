@@ -14,6 +14,7 @@ class SemanticModule(nn.Module):
         self.layers = nn.ModuleList([
             gnn.basic.ResidualGeneralHeteroConvBlock(['connected_to_sum', 'ordered_next_sum'], 16, 32),
             gnn.basic.ResidualGeneralHeteroConvBlock(['represents_sum', 'represented_by_sum', 'neighboring_vertical_mean', 'neighboring_horizontal_mean', 'contains_sum', 'order_add', 'perpendicular_mean'], 32, 64),
+            gnn.basic.ResidualGeneralHeteroConvBlock(['represents_sum', 'represented_by_sum', 'neighboring_vertical_mean', 'neighboring_horizontal_mean', 'contains_sum', 'order_add', 'perpendicular_mean'], 64, 64),
 
         ])
 
@@ -46,4 +47,4 @@ class Stroke_Decoder(nn.Module):
         )
 
     def forward(self, x_dict):
-        return torch.sigmoid(self.decoder(x_dict['stroke']))
+        return self.decoder(x_dict['stroke'])
